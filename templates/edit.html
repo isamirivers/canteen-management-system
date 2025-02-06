@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ texts.edit_order_title }}</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+</head>
+<body>
+    <div id="daysList" class="screen">
+        <header>
+            <a href="/settings"><i class="ph-bold ph-arrow-left"></i></a>
+            <h2>{{ texts.edit_order_header }}</h2>
+        </header>
+        <div class="cards">
+            <!-- Карточки дней будут загружены через JavaScript -->
+        </div> 
+    </div>
+    <script>
+        const daysList = document.querySelector('.cards');
+
+        // Загрузка списка блюд
+        let dishesMap = {};
+        let dishesByType = {};
+        fetch('/dishes')
+            .then(response => response.json())
+            .then(data => {
+                data.dishes.forEach(dish => {
+                    console.log('Dish:', dish); // Отладочное сообщение
+                    dishesMap[dish['_id'].toString()] = dish.name;
+                    if (!dishesByType[dish.type]) {
+                        dishesByType[dish.type] = [];
+                    }
+                    dishesByType[dish.type].push(dish);
+                });
+                loadDays();
+            })
+            .catch(error => {
+                console.error('Error fetching dishes:', error); // Отладочное сообщение
+                alert('Ошибка при загрузке списка блюд: ' + error.message);
+            });
+
+        // Загрузка списка дней
+        function loadDays() {
+            // Удаление всех дней перед повторной загрузкой
+            daysList.innerHTML = '';
+
+            fetch('/days')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Days data:', data); // Отладочное сообщение
+                    data.days.forEach(day => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        const dayTitle = document.createElement('h3');
+                        dayTitle.textContent = day.display_name;
+                        card.appendChild(dayTitle);
+                        const dishesList = document.createElement('ul');
+                        day.dishes.forEach(dishId => {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = dishesMap[dishId] || 'Unknown dish';
+                            dishesList.appendChild(listItem);
+                        });
+                        card.appendChild(dishesList);
+
+                        // Добавление кнопки "Изменить"
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'buttondown';
+                        const editButton = document.createElement('button');
+                        editButton.textContent = '{{texts.edit}}';
+                        editButton.addEventListener('click', () => {
+                            if (editButton.textContent === '{{texts.edit}}') {
+                                // Скрытие кнопок "Изменить" в других днях
+                                document.querySelectorAll('.buttondown button').forEach(button => {
+                                    if (button !== editButton) {
+                                        button.style.display = 'none';
+                                    }
+                                });
+
+                                dishesList.querySelectorAll('li').forEach(listItem => {
+                                    const select = document.createElement('select');
+                                    // Порядок группировки типов блюд
+                                    const typeOrder = ['Первое', 'Второе', 'Гарниры', 'Салаты', 'Напитки', 'Хлеб'];
+                                    const sortedTypes = Object.keys(dishesByType).sort((a, b) => {
+                                        const indexA = typeOrder.indexOf(a);
+                                        const indexB = typeOrder.indexOf(b);
+                                        if (indexA === -1 && indexB === -1) {
+                                            return a.localeCompare(b);
+                                        }
+                                        if (indexA === -1) return 1;
+                                        if (indexB === -1) return -1;
+                                        return indexA - indexB;
+                                    });
+
+                                    sortedTypes.forEach(type => {
+                                        const groupOption = document.createElement('option');
+                                        groupOption.textContent = type;
+                                        groupOption.disabled = true;
+                                        select.appendChild(groupOption);
+
+                                        dishesByType[type].sort((a, b) => a.name.localeCompare(b.name)).forEach(dish => {
+                                            const option = document.createElement('option');
+                                            option.value = dish['_id'];
+                                            option.textContent = dish.name;
+                                            if (dish.name === listItem.textContent) {
+                                                option.selected = true;
+                                            }
+                                            select.appendChild(option);
+                                        });
+                                    });
+                                    listItem.textContent = '';
+                                    listItem.appendChild(select);
+
+                                    // Добавление кнопки "X"
+                                    const removeButton = document.createElement('button');
+                                    removeButton.innerHTML = '<i class="ph-bold ph-trash"></i>';
+                                    removeButton.style.width = 'min-content';
+                                    removeButton.addEventListener('click', () => {
+                                        listItem.remove();
+                                    });
+                                    listItem.appendChild(removeButton);
+                                });
+                                editButton.textContent = '{{texts.save}}';
+
+                                // Добавление кнопки "Добавить элемент"
+                                const addButton = document.createElement('button');
+                                addButton.innerHTML = '<i class="ph-bold ph-list-plus"></i>';
+                                addButton.style.width = 'min-content';
+                                addButton.addEventListener('click', () => {
+                                    const newListItem = document.createElement('li');
+                                    const select = document.createElement('select');
+                                    // Порядок группировки типов блюд
+                                    const typeOrder = ['Первое', 'Второе', 'Гарниры', 'Салаты', 'Напитки', 'Хлеб'];
+                                    const sortedTypes = Object.keys(dishesByType).sort((a, b) => {
+                                        const indexA = typeOrder.indexOf(a);
+                                        const indexB = typeOrder.indexOf(b);
+                                        if (indexA === -1 && indexB === -1) {
+                                            return a.localeCompare(b);
+                                        }
+                                        if (indexA === -1) return 1;
+                                        if (indexB === -1) return -1;
+                                        return indexA - indexB;
+                                    });
+
+                                    sortedTypes.forEach(type => {
+                                        const groupOption = document.createElement('option');
+                                        groupOption.textContent = type;
+                                        groupOption.disabled = true;
+                                        select.appendChild(groupOption);
+
+                                        dishesByType[type].sort((a, b) => a.name.localeCompare(b.name)).forEach(dish => {
+                                            const option = document.createElement('option');
+                                            option.value = dish['_id'];
+                                            option.textContent = dish.name;
+                                            select.appendChild(option);
+                                        });
+                                    });
+                                    newListItem.appendChild(select);
+
+                                    // Добавление кнопки "X"
+                                    const removeButton = document.createElement('button');
+                                    removeButton.innerHTML = '<i class="ph ph-trash"></i>';
+                                    removeButton.style.width = 'min-content';
+                                    removeButton.addEventListener('click', () => {
+                                        newListItem.remove();
+                                    });
+                                    newListItem.appendChild(removeButton);
+
+                                    dishesList.appendChild(newListItem);
+                                });
+                                buttonContainer.insertBefore(addButton, editButton);
+                            } else {
+                                // Логика сохранения изменений
+                                const updatedDishes = [];
+                                dishesList.querySelectorAll('li select').forEach(select => {
+                                    updatedDishes.push(select.value);
+                                });
+
+                                fetch('/edit', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        day: dayTitle.textContent.split(' ')[1],
+                                        dishes: updatedDishes
+                                    })
+                                }).then(response => response.text())
+                                  .then(result => {
+                                      if (result === 'OK') {
+                                          editButton.textContent = '{{texts.edit}}';
+                                          buttonContainer.querySelector('button i.ph-list-plus').parentElement.remove();
+                                          loadDays(); // Перезагрузка списка дней
+                                      } else {
+                                          console.error('Error saving changes:', result);
+                                          alert('Ошибка при сохранении изменений: ' + result);
+                                      }
+                                  })
+                                  .catch(error => {
+                                      console.error('Error saving changes:', error);
+                                      alert('Ошибка при сохранении изменений: ' + error.message);
+                                  });
+                            }
+                        });
+                        buttonContainer.appendChild(editButton);
+                        card.appendChild(buttonContainer);
+
+                        daysList.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching days:', error); // Отладочное сообщение
+                    alert('Ошибка при загрузке списка дней: ' + error.message);
+                });
+        }
+    </script>
+</body>
+</html>

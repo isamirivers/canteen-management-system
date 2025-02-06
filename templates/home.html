@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ texts.title_menu }}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h2>{{ texts.order_food }}</h2>
+            <div class="grow">
+                <a href="/settings"><i class="ph-bold ph-gear"></i></a>
+            </div>
+        </header>
+        <div id="cards" class="cards one" style="padding-bottom: 90px;">
+            <div id="activeOrders">
+
+            </div>
+            <!-- Сюда будут добавляться карточки блюд -->
+        </div>
+    </div>
+    <div class="bottom">
+        <button class="sand" disabled style="font-size: 1.56rem;max-width: 970px;opacity: 0.5;" onclick="createOrder()">
+            0 {{texts.sign}}
+        </button>
+    </div>
+
+    <script>
+        // Проверка авторизации и активного заказа
+        fetch('/check_auth')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.authenticated) {
+                    window.location.href = '/';
+                } else {
+                    // Проверяем наличие активного заказа
+                    fetch('/check_active_order')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.has_active_order) {
+                                const activeOrderDiv = document.getElementById('activeOrders');
+                                let ordersHtml = data.orders.map(order => {
+                                    let dishesHtml = order.dishes.map(dish => 
+                                        `<div style="display: flex; justify-content: space-between; width: 100%;">
+                                            <span>${dish.name}</span>
+                                            <span>${dish.price} {{texts.sign}}</span>
+                                        </div>`
+                                    ).join('');
+                                    
+                                    return `
+                                    <div id="activeOrder" class="card">
+                                        <div style="width: 100%;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                                <h3>Ваш заказ на ${order.date}</h3>
+                                            </div>
+                                            <div style="width: 100%;">
+                                                ${dishesHtml}
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;    margin-top: 10px;">
+                                                <h3 style="color: #E7C3A1;">Назовите номер #${order.order_id}</h3>
+                                                <h3>Итого: ${order.total} {{texts.sign}}</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    `;
+                                }).join('');
+                                
+                                activeOrderDiv.innerHTML = ordersHtml;
+                                activeOrderDiv.style.display = 'flex';
+                                activeOrderDiv.style.flexDirection = 'column';
+                                activeOrderDiv.style.gap = '10px';
+                                
+                                // Проверяем, есть ли заказ на завтра
+                                if (data.orders.some(order => order.date === 'завтра')) {
+                                    document.querySelector('.bottom button').disabled = true;
+                                    document.querySelector('.bottom button').style.opacity = '0.5';
+                                    document.querySelector('.bottom button').textContent = 'У вас уже есть заказ на завтра';
+                                }
+                            }
+                        });
+                }
+            });
+
+        // Объект для хранения заказанных блюд
+        const orderedDishes = new Set();
+        // Переменная для хранения ID выбранного хлеба
+        let selectedBreadId = null;
+        // Добавляем объект для хранения цен блюд
+        const dishPrices = new Map();
+
+        function updateOrderButton() {
+            const total = Array.from(orderedDishes).reduce((sum, id) => sum + (dishPrices.get(id) || 0), 0);
+            const button = document.querySelector('.bottom button');
+            button.textContent = `${total} {{texts.sign}}`;
+            
+            if (total > 0) {
+                button.disabled = false;
+                button.style.opacity = '1';
+            } else {
+                button.disabled = true;
+                button.style.opacity = '0.5';
+            }
+        }
+
+        // Загрузка блюд текущего дня
+        fetch('/current_day_dishes')
+            .then(response => response.json())
+            .then(data => {
+                const dishes = data.dishes;
+                const container = document.querySelector('.cards');
+
+                dishes.forEach(dish => {
+                    // Сохраняем цену блюда
+                    dishPrices.set(dish._id, dish.price);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'card customer';
+                    card.innerHTML = `
+                        <div>
+                            <h3>${dish.name}</h3>
+                        </div>
+                        <button onclick="addToOrder('${dish._id}', '${dish.name}', ${dish.price}, this, '${dish.type}')">${dish.price} {{texts.sign}}</button>
+                    `;
+                    container.appendChild(card);
+                });
+            });
+
+        function addToOrder(id, name, price, button, type) {
+            if (orderedDishes.has(id)) {
+                // Убираем из заказа
+                orderedDishes.delete(id);
+                button.classList.remove('sand');
+                if (type === 'Хлеб' && selectedBreadId === id) {
+                    selectedBreadId = null;
+                }
+            } else {
+                // Проверяем, если это хлеб
+                if (type === 'Хлеб') {
+                    // Если уже выбран хлеб, отменяем предыдущий выбор
+                    if (selectedBreadId) {
+                        const previousButton = document.querySelector(`button[onclick*="${selectedBreadId}"]`);
+                        if (previousButton) {
+                            previousButton.classList.remove('sand');
+                            orderedDishes.delete(selectedBreadId);
+                        }
+                    }
+                    selectedBreadId = id;
+                }
+                // Добавляем в заказ
+                orderedDishes.add(id);
+                button.classList.add('sand');
+            }
+            
+            // Обновляем сумму заказа
+            updateOrderButton();
+        }
+
+        function createOrder() {
+            if (orderedDishes.size === 0) {
+                alert('Выберите хотя бы одно блюдо');
+                return;
+            }
+
+            fetch('/create_order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    dishes: Array.from(orderedDishes)
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Перезагружаем страницу для обновления информации
+                    location.reload();
+                } else {
+                    alert(data.error || 'Ошибка при создании заказа');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при создании заказа');
+            });
+        }
+    </script>
+</body>
+</html>

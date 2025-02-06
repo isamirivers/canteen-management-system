@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ texts.orders_title }}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h2>{{ texts.orders_header }}</h2>
+            <div class="grow">
+                <a href="/settings"><i class="ph-bold ph-gear"></i></a>
+            </div>
+        </header>
+        <div style="display: flex;gap: 10px;align-items: center;justify-content: space-evenly;width: 100%;font-size: 26px;">
+            <button onclick="loadOrders('today')" class="sand" style="min-width: fit-content;max-width: fit-content;">{{ texts.today }}</button>
+            <button onclick="loadOrders('tomorrow')" style="min-width: fit-content;max-width: fit-content;">{{ texts.tomorrow }}</button>
+            <span style="margin-left: auto;min-width: fit-content;display: flex;align-items: center;gap: 10px;"><i class="ph-bold ph-arrow-clockwise"></i> <span id="countdown">15</span></span>
+        </div>
+        <div class="cards one">
+            <!-- Здесь будет список заказов -->
+        </div>
+    </div>
+
+    <script>
+        let currentDate = 'today';
+        let countdown = 15;
+        let timer;
+
+        function updateCountdown() {
+            countdown--;
+            document.getElementById('countdown').textContent = countdown;
+            if (countdown <= 0) {
+                countdown = 15;
+                loadOrders(currentDate);
+            }
+        }
+
+        function markOrderComplete(orderId, cardElement) {
+            fetch('/mark_order_complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ order_id: orderId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cardElement.remove();
+                    // Проверяем, остались ли заказы
+                    if (document.querySelector('.cards').children.length === 0) {
+                        document.querySelector('.cards').innerHTML = '<div class="card"><h3>{{texts.no_orders}}</h3></div>';
+                    }
+                }
+            });
+        }
+
+        function loadOrders(date) {
+            // Сбрасываем таймер при ручном обновлении
+            clearInterval(timer);
+            countdown = 15;
+            document.getElementById('countdown').textContent = countdown;
+            timer = setInterval(updateCountdown, 1000);
+
+            // Обновляем стили кнопок
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('sand'));
+            document.querySelector(`button[onclick*="${date}"]`).classList.add('sand');
+            
+            currentDate = date;
+            
+            fetch(`/get_orders?date=${date}`)
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.querySelector('.cards');
+                    container.innerHTML = ''; // Очищаем контейнер
+
+                    data.orders.forEach(order => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        
+                        let dishesHtml = order.dishes.map(dish => 
+                            `<div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span>${dish.name}</span>
+                                <span>${dish.price} {{texts.sign}}</span>
+                             </div>`
+                        ).join('');
+
+                        card.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <h3>Заказ #${order.order_id}</h3>
+                                <h3>${order.user}</h3>
+                            </div>
+                            <div style="width: 100%;">
+                                ${dishesHtml}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; width: 100%;align-items:center;">
+                                <button onclick="markOrderComplete(${order.order_id}, this.closest('.card'))" style="max-width: fit-content;">Отметить как выполненный</button>
+                                <h3>Итого: ${order.total} {{texts.sign}}</h3>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+
+                    if (data.orders.length === 0) {
+                        container.innerHTML = '<div class="card"><h3>{{texts.no_orders}}</h3></div>';
+                    }
+                });
+        }
+
+        // Загружаем заказы на сегодня при загрузке страницы
+        loadOrders('today');
+
+        // Очищаем интервал при уходе со страницы
+        window.addEventListener('beforeunload', () => {
+            clearInterval(timer);
+        });
+    </script>
+</body>
+</html>

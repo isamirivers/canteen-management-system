@@ -1,0 +1,403 @@
+@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@100..900&display=swap');
+@import url('oks.css');
+
+body {
+    margin: 0;
+    background-repeat: no-repeat!important;
+    background: url("bg.png") center/cover #171717;
+    display: flex;
+    height: 100vh;
+    font-size: 16px;
+    justify-content: center;
+    background-size: 210vh;
+    font-family: "Geologica", sans-serif;
+    color: white;
+}
+
+body > div:first-child {
+    max-width: 970px;
+    padding: 20px 14px;
+}
+
+body > div:first-child, body > div:first-child > main {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    flex: 1 0 0;
+}
+
+* {
+    word-break: break-word;
+}
+
+.hidden {
+    display: none;
+}
+
+h1, h2, h3, h4, ul, p {
+    margin: 0;
+}
+
+a {
+    color: unset;
+    text-decoration: none;
+}
+
+li {
+    display: flex;
+    gap: 5px;
+}
+
+ul {
+    margin-top: 5px;
+    list-style-type: none;
+    padding: 0px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+ul, select {
+    width: 100%;
+}
+
+h1, h2, h4 {
+    color: #FFF;
+    text-align: left;
+    font-family: "Oks Free";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 90%;
+    font-feature-settings: 'liga' off;
+}
+
+h1 {
+    font-size: 8rem;
+}
+
+h2 {
+    font-size: 4.18rem;
+}
+
+h3 {
+    font-size: 1.87rem;
+    font-weight: 300;
+}
+
+h4 {
+    font-size: 3rem;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 7px;
+    padding-bottom: 20px;
+}
+
+.cards.one {
+    grid-template-columns: 1fr;
+}
+
+@media (max-width: 600px) {
+    .cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card, .center-page-mobile > div > main {
+    display: flex;
+    flex-grow: 1;
+    padding: 24px;
+    align-items: flex-start;
+    gap: 14px;
+
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.40);
+    background: linear-gradient(162deg, rgba(38, 36, 36, 0.80) 0%, #262424 80.26%);
+    color: #FFF;
+    font-family: "Geologica", sans-serif;
+    font-style: normal;
+    font-weight: 300;
+    flex-direction: column;
+    font-size: 1.1rem;
+}
+
+.card.customer {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.card.customer > div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+button {
+    --button-text: #ffffff;
+    --button-fg: #ffffff;
+    --button-bg: #1e1e1c;
+    --button-bg-2: #1e1e1c;
+    --button-bg-3: #1e1e1c;
+    --button-shadow: rgba(0, 0, 0, 0.25);
+    --button-shadow-2: rgba(255, 255, 255, 0.20);
+
+    display: flex;
+    padding: 15px 19px;
+    justify-content: center;
+    align-items: center;
+    gap: 3.8px;
+
+    border-radius: 28px;
+    border: 1px solid var(--button-fg);
+    background: linear-gradient(0deg, var(--button-bg) -15.69%, var(--button-bg-2) 127.45%), var(--button-bg-3);
+    box-shadow: 0px 3.802px 9.125px 0px rgba(0, 0, 0, 0.25), 3.422px 2.661px 11.406px -1.521px rgba(255, 255, 255, 0.20) inset;
+
+    color: var(--button-text);
+    text-align: center;
+    leading-trim: both;
+    text-edge: cap;
+    text-overflow: ellipsis;
+    font-family: "Geologica", sans-serif;
+    font-size: 1.18rem;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 83%;
+
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover {
+    background-color: #322e2e;
+    transform: translate(0px, -2px);
+}
+ 
+button:active {
+    background-color: #131212;
+    border-color: #b7b7b7;
+    color: #b7b7b7;
+    box-shadow: none;
+    transform: scale(0.98) translate(0px, -2px);
+}
+
+button.red.dark {
+    --button-text: #EEB6B6;
+    --button-fg: #8D3131;
+    --button-bg: #7B2222;
+    --button-bg-2: #DD5151;
+    --button-bg-3: #1E1C1C;
+    --button-shadow: rgba(0, 0, 0, 0.25);
+    --button-shadow-2: rgba(255, 255, 255, 0.20);
+}
+
+button.red {
+    --button-text: #8D3131;
+    --button-fg: #8D3131;
+    --button-bg: #E7A1A1;
+    --button-bg-2: #F7E0E0;
+    --button-bg-3: #1E1C1C;
+    --button-shadow: rgba(0, 0, 0, 0.25);
+    --button-shadow-2: rgba(255, 255, 255, 0.20);
+}
+
+button.sand {
+    --button-text: #8D4631;
+    --button-fg: #8D4631;
+    --button-bg: #E7C3A1;
+    --button-bg-2: #F7EAE0;
+    --button-bg-3: #1E1C1C;
+    --button-shadow: rgba(0, 0, 0, 0.25);
+    --button-shadow-2: rgba(255, 255, 255, 0.20);
+}
+
+@media (pointer: coarse) {
+    button {
+        min-width: 60px;
+        min-height: 60px;
+        padding: 12.5px 30px;
+        border: 1.5px solid var(--button-fg);
+    }
+}
+
+.card.customer > button {
+    width: auto;
+    min-width: fit-content;
+    font-size: 20px;
+    padding: 12.5px 19px;
+    min-height: auto;
+}
+
+.buttondown {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+select, input, [contenteditable] {
+    background: #0000003b;
+    outline: none;
+    border: 1px solid #FFF;
+    border-radius: 10px;
+    padding: 5.5px 8px;
+    color: white;
+    font-family: 'Geologica', sans-serif;
+}
+
+select option {
+    width: auto;
+    min-width: 100%;
+}
+
+header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+}
+
+header > .grow {
+    display: flex;
+    flex-grow: 1;
+    justify-content: flex-end;
+    align-items: flex-start;
+    height: 100%;
+    gap: 10px;
+}
+
+header > a {
+    padding-top: 5px;
+}
+
+header > a > i, header > .grow > a > i {
+    font-size: 56px;
+    color: white;
+    padding-top: 5px;
+}
+
+.center-page {
+    display: flex;
+    align-items: center;
+}
+
+.center-page > div {
+    align-items: center!important;
+    text-align: center;
+}
+
+.center-page-mobile, .center-page-mobile > div {
+    display: flex;
+    align-items: center!important;
+}
+
+.center-page-mobile > div {
+    align-items: stretch !important;
+    height: calc(100% - 40px);
+}
+
+.center-page-mobile > div > main {
+    align-items: stretch!important;
+}
+
+.type-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.type-container select {
+    height: 35px;
+    margin-left: 8px;
+}
+
+.type-container > span {
+    word-break: auto-phrase;
+}
+
+#cards > h4 {
+    margin-bottom: 10px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.dish-section {
+    margin-bottom: 30px;
+}
+
+.dish-section h2 {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.dishes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.dish-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.dish-card:hover {
+    transform: translateY(-3px);
+}
+
+.dish-card h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.dish-card .price {
+    font-size: 1.2em;
+    color: #2c3e50;
+    margin: 10px 0;
+}
+
+.dish-card button {
+    width: 100%;
+    padding: 8px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dish-card button:hover {
+    background: #2980b9;
+}
+
+.bottom {
+    position: fixed;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, #000 100%);
+    display: flex;
+    height: 100px;
+    width: calc(100% - 30px);
+    padding: 8px 17px 18px 17px;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.coral {
+    color: #ff6750;
+}

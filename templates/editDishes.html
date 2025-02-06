@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ texts.edit_dishes_title }}</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+</head>
+<body>
+    <div id="dishesList" class="screen">
+        <header>
+            <a href="/settings"><i class="ph-bold ph-arrow-left"></i></a>
+            <h2>{{ texts.edit_dishes_header }}</h2>
+            <div class="grow">
+                <a style="cursor: pointer;"><i class="ph-bold ph-list-plus"></i></a>
+            </div>
+        </header>
+        <div id="cards">
+            <!-- Карточки блюд будут загружены через JavaScript -->
+        </div> 
+    </div>
+    <script>
+        const typeOrder = ['Первое', 'Второе', 'Гарниры', 'Салаты', 'Напитки', 'Хлеб'];
+    
+        function createTypeSelect(currentType) {
+            const select = document.createElement('select');
+            typeOrder.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                if (type === currentType) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            return select;
+        }
+
+        function createTypeContainer(currentType) {
+            const container = document.createElement('div');
+            container.className = 'type-container';
+            
+            const label = document.createElement('span');
+            label.textContent = '{{texts.type}}: ';
+            container.appendChild(label);
+            
+            const select = createTypeSelect(currentType);
+            container.appendChild(select);
+            
+            return container;
+        }
+
+        const dishesList = document.querySelector('#cards');
+
+        // Загрузка списка блюд
+        function loadDishes() {
+            fetch('/dishes')
+                .then(response => response.json())
+                .then(data => {
+                    dishesList.innerHTML = '';
+
+                    // Определяем порядок типов блюд
+                    const typeOrder = ['Первое', 'Второе', 'Гарниры', 'Салаты', 'Напитки', 'Хлеб'];
+                    
+                    // Группировка блюд по типу
+                    const groupedDishes = data.dishes.reduce((groups, dish) => {
+                        const type = dish.type;
+                        if (!groups[type]) {
+                            groups[type] = [];
+                        }
+                        groups[type].push(dish);
+                        return groups;
+                    }, {});
+
+                    // Сортировка типов блюд в нужном порядке
+                    const sortedTypes = Object.keys(groupedDishes).sort((a, b) => {
+                        const indexA = typeOrder.indexOf(a);
+                        const indexB = typeOrder.indexOf(b);
+                        if (indexA === -1 && indexB === -1) {
+                            return a.localeCompare(b);
+                        }
+                        if (indexA === -1) return 1;
+                        if (indexB === -1) return -1;
+                        return indexA - indexB;
+                    });
+
+                    // Сортировка блюд в каждой группе по алфавиту
+                    Object.keys(groupedDishes).forEach(type => {
+                        groupedDishes[type].sort((a, b) => a.name.localeCompare(b.name));
+                    });
+
+                    // Отображение сгруппированных и отсортированных блюд
+                    sortedTypes.forEach(type => {
+                        const typeHeader = document.createElement('h4');
+                        typeHeader.textContent = type;
+                        dishesList.appendChild(typeHeader);
+
+                        const typeCards = document.createElement('div');
+                        typeCards.className = 'cards';
+                        dishesList.appendChild(typeCards);
+
+                        groupedDishes[type].forEach(dish => {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            const dishName = document.createElement('h3');
+                            dishName.textContent = dish.name;
+                            card.appendChild(dishName);
+
+                            const dishType = document.createElement('p');
+                            dishType.innerHTML = `{{texts.type}}: <span>${dish.type}</span>`;
+                            card.appendChild(dishType);
+
+                            const dishPrice = document.createElement('p');
+                            dishPrice.innerHTML = `{{texts.price}}: <span>${dish.price}</span>{{texts.sign}}`;
+                            card.appendChild(dishPrice);
+
+                            // Добавление кнопок "Удалить" и "Изменить"
+                            const buttonContainer = document.createElement('div');
+                            buttonContainer.className = 'buttondown';
+                            
+                            const deleteButton = document.createElement('button');
+                            deleteButton.innerHTML = '<i class="ph-bold ph-trash"></i>';
+                            deleteButton.style.maxWidth = 'min-content';
+                            deleteButton.addEventListener('click', () => {
+                                if (confirm(`Вы уверены, что хотите удалить блюдо "${dish.name}"?`)) {
+                                    fetch(`/dishes/${dish._id}`, {
+                                        method: 'DELETE'
+                                    }).then(response => response.text())
+                                      .then(result => {
+                                          if (result === 'OK') {
+                                              // Перезагрузка списка блюд
+                                              loadDishes();
+                                          } else {
+                                              console.error('Error deleting dish:', result);
+                                              alert('Ошибка при удалении блюда: ' + result);
+                                          }
+                                      })
+                                      .catch(error => {
+                                          console.error('Error deleting dish:', error);
+                                          alert('Ошибка при удалении блюда: ' + error.message);
+                                      });
+                                }
+                            });
+                            buttonContainer.appendChild(deleteButton);
+
+                            const editButton = document.createElement('button');
+                            editButton.textContent = '{{texts.edit}}';
+                            editButton.addEventListener('click', () => {
+                                if (editButton.textContent === '{{texts.edit}}') {
+                                    // Скрыть кнопки "Изменить" у всех других карточек
+                                    document.querySelectorAll('.card button').forEach(button => {
+                                        if (button !== editButton) {
+                                            button.style.display = 'none';
+                                        }
+                                    });
+
+                                    dishName.contentEditable = true;
+                                    
+                                    // Сохраняем текущий тип
+                                    const currentType = dishType.querySelector('span').textContent;
+                                    // Создаем новый контейнер с select
+                                    const typeContainer = createTypeContainer(currentType);
+                                    // Заменяем параграф на новый контейнер
+                                    dishType.replaceWith(typeContainer);
+                                    // Сохраняем ссылку на параграф для последующего восстановления
+                                    typeContainer.originalElement = dishType;
+                                    
+                                    dishPrice.querySelector('span').contentEditable = true;
+                                    editButton.textContent = '{{texts.save}}';
+                                } else {
+                                    // Логика сохранения изменений
+                                    const updatedDish = {
+                                        name: dishName.textContent,
+                                        // Находим select внутри type-container
+                                        type: card.querySelector('.type-container select').value,
+                                        price: parseInt(dishPrice.querySelector('span').textContent)
+                                    };
+
+                                    fetch(`/dishes/${dish._id}`, {
+                                        method: 'PUT',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify(updatedDish)
+                                    }).then(response => response.text())
+                                      .then(result => {
+                                          if (result === 'OK') {
+                                              editButton.textContent = '{{texts.edit}}';
+                                              dishName.contentEditable = false;
+                                              
+                                              // Восстанавливаем параграф с обновленным значением
+                                              const typeContainer = card.querySelector('.type-container');
+                                              const originalElement = typeContainer.originalElement;
+                                              originalElement.innerHTML = `{{texts.type}}: <span>${updatedDish.type}</span>`;
+                                              typeContainer.replaceWith(originalElement);
+                                              
+                                              dishPrice.querySelector('span').contentEditable = false;
+
+                                              // Показать кнопки "Изменить" у всех карточек
+                                              document.querySelectorAll('.card button').forEach(button => {
+                                                  button.style.display = 'inline-block';
+                                              });
+
+                                              // Перезагрузка списка блюд
+                                              loadDishes();
+                                          } else {
+                                              console.error('Error saving changes:', result);
+                                              alert('Ошибка при сохранении изменений: ' + result);
+                                          }
+                                      })
+                                      .catch(error => {
+                                          console.error('Error saving changes:', error);
+                                          alert('Ошибка при сохранении изменений: ' + error.message);
+                                      });
+                                }
+                            });
+                            buttonContainer.appendChild(editButton);
+
+                            card.appendChild(buttonContainer);
+                            typeCards.appendChild(card);
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching dishes:', error); // Отладочное сообщение
+                    alert('Ошибка при загрузке списка блюд: ' + error.message);
+                });
+        }
+
+        loadDishes();
+
+        // Добавление нового элемента списка и прокрутка к нему
+        document.querySelector('.ph-list-plus').addEventListener('click', () => {
+            const newDish = {
+                name: '{{texts.new_dish}}',
+                type: '{{texts.type}}',
+                price: 0
+            };
+
+            fetch('/dishes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newDish)
+            }).then(response => response.json())
+              .then(dish => {
+                  const card = document.createElement('div');
+                  card.className = 'card';
+                  const dishName = document.createElement('h3');
+                  dishName.textContent = dish.name;
+                  card.appendChild(dishName);
+
+                  const dishType = document.createElement('p');
+                  dishType.innerHTML = `{{texts.type}}: <span>${dish.type}</span>`;
+                  card.appendChild(dishType);
+
+                  const dishPrice = document.createElement('p');
+                  dishPrice.innerHTML = `{{texts.price}}: <span>${dish.price}</span>{{texts.sign}}`;
+                  card.appendChild(dishPrice);
+
+                  // Добавление кнопок "Удалить" и "Изменить"
+                  const buttonContainer = document.createElement('div');
+                  buttonContainer.className = 'buttondown';
+                  
+                  const deleteButton = document.createElement('button');
+                  deleteButton.innerHTML = '<i class="ph-bold ph-trash"></i>';
+                  deleteButton.style.maxWidth = 'min-content';
+                  deleteButton.addEventListener('click', () => {
+                      if (confirm(`Вы уверены, что хотите удалить блюдо "${dish.name}"?`)) {
+                          fetch(`/dishes/${dish._id}`, {
+                              method: 'DELETE'
+                          }).then(response => response.text())
+                            .then(result => {
+                                if (result === 'OK') {
+                                    // Перезагрузка списка блюд
+                                    loadDishes();
+                                } else {
+                                    console.error('Error deleting dish:', result);
+                                    alert('Ошибка при удалении блюда: ' + result);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error deleting dish:', error);
+                                alert('Ошибка при удалении блюда: ' + error.message);
+                            });
+                      }
+                  });
+                  buttonContainer.appendChild(deleteButton);
+
+                  const editButton = document.createElement('button');
+                  editButton.textContent = '{{texts.edit}}';
+                  editButton.addEventListener('click', () => {
+                      if (editButton.textContent === '{{texts.edit}}') {
+                          // Скрыть кнопки "Изменить" у всех других карточек
+                          document.querySelectorAll('.card button').forEach(button => {
+                              if (button !== editButton) {
+                                  button.style.display = 'none';
+                              }
+                          });
+
+                          dishName.contentEditable = true;
+                          
+                          // Сохраняем текущий тип
+                          const currentType = dishType.querySelector('span').textContent;
+                          // Создаем новый контейнер с select
+                          const typeContainer = createTypeContainer(currentType);
+                          // Заменяем параграф на новый контейнер
+                          dishType.replaceWith(typeContainer);
+                          // Сохраняем ссылку на параграф для последующего восстановления
+                          typeContainer.originalElement = dishType;
+                          
+                          dishPrice.querySelector('span').contentEditable = true;
+                          editButton.textContent = '{{texts.save}}';
+                      } else {
+                          // Логика сохранения изменений
+                          const updatedDish = {
+                              name: dishName.textContent,
+                              // Находим select внутри type-container
+                              type: card.querySelector('.type-container select').value,
+                              price: parseInt(dishPrice.querySelector('span').textContent)
+                          };
+
+                          fetch(`/dishes/${dish._id}`, {
+                              method: 'PUT',
+                              headers: {
+                                  'Content-Type': 'application/json'
+                              },
+                              body: JSON.stringify(updatedDish)
+                          }).then(response => response.text())
+                            .then(result => {
+                                if (result === 'OK') {
+                                    editButton.textContent = '{{texts.edit}}';
+                                    dishName.contentEditable = false;
+                                    
+                                    // Восстанавливаем параграф с обновленным значением
+                                    const typeContainer = card.querySelector('.type-container');
+                                    const originalElement = typeContainer.originalElement;
+                                    originalElement.innerHTML = `{{texts.type}}: <span>${updatedDish.type}</span>`;
+                                    typeContainer.replaceWith(originalElement);
+                                    
+                                    dishPrice.querySelector('span').contentEditable = false;
+
+                                    // Показать кнопки "Изменить" у всех карточек
+                                    document.querySelectorAll('.card button').forEach(button => {
+                                        button.style.display = 'inline-block';
+                                    });
+
+                                    // Перезагрузка списка блюд
+                                    loadDishes();
+                                } else {
+                                    console.error('Error saving changes:', result);
+                                    alert('Ошибка при сохранении изменений: ' + result);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error saving changes:', error);
+                                alert('Ошибка при сохранении изменений: ' + error.message);
+                            });
+                      }
+                  });
+                  buttonContainer.appendChild(editButton);
+
+                  card.appendChild(buttonContainer);
+                  dishesList.insertBefore(card, dishesList.firstChild);
+
+                  // Перевод нового элемента в режим редактирования
+                  editButton.click();
+              })
+              .catch(error => {
+                  console.error('Error adding new dish:', error);
+                  alert('Ошибка при добавлении нового блюда: ' + error.message);
+              });
+        });
+    </script>
+</body>
+</html>

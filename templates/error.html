@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка {{ error_code }}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="center-page">
+    <div>
+        <h1>{{ error_code }}</h1>
+        <h2 style="text-align: center;">{{error_message|safe}}</h2>
+        <a href="/"><button>Вернуться на главную</button></a>
+    </div>
+</body>
+</html>

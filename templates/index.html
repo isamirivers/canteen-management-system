@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ texts.title_food }}</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+</head>
+<body class="center-page">
+    <div id="settings" class="screen active" data-view>
+        <h2>{{ texts.login }}</h2>
+        <form id="loginForm" method="POST" action="/login">
+            <input type="text" name="login" placeholder="{{ texts.login_placeholder }}" required>
+            <input type="password" name="password" placeholder="{{ texts.password_placeholder }}" required>
+            <button type="submit" class="btn">{{ texts.login_button }}</button>
+        </form>
+        <div id="error" class="error hidden"></div>
+        <h2>{{ texts.register }}</h2>
+        <form id="registerForm" method="POST" action="/register">
+            <input type="text" name="login" placeholder="{{ texts.login_placeholder }}" required>
+            <input type="password" name="password" placeholder="{{ texts.password_placeholder }}" required>
+            <button type="submit" class="btn">{{ texts.register_button }}</button>
+        </form>
+        <div id="registerError" class="error hidden"></div>
+    </div>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginErrorDiv = document.getElementById('error');
+        const registerForm = document.getElementById('registerForm');
+        const registerErrorDiv = document.getElementById('registerError');
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(loginForm);
+            const response = await fetch('/login', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.text();
+            if (result === 'OK') {
+                window.location.href = '/home';
+            } else {
+                loginErrorDiv.textContent = result;
+                loginErrorDiv.classList.remove('hidden');
+            }
+        });
+
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData(registerForm);
+            const response = await fetch('/register', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.text();
+            if (result === 'OK') {
+                window.location.href = '/home';
+            } else {
+                registerErrorDiv.textContent = result;
+                registerErrorDiv.classList.remove('hidden');
+            }
+        });
+
+        // Проверка авторизации
+        fetch('/check_auth')
+            .then(response => response.json())
+            .then(data => {
+                if (data.authenticated) {
+                    window.location.href = '/home';
+                }
+            });
+    </script>
+</body>
+</html>
