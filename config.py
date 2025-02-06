@@ -6,7 +6,7 @@ class Config:
 
     # Flask settings
     SECRET_KEY = 'your-secret-key-here'  # Change this to a secure random string
-    DEBUG = True
+    DEBUG = False
 
     # Locale
     LOCALE = 'RU' # RU or EN

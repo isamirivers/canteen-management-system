@@ -47,7 +47,7 @@ A web application for managing orders in an educational institution's canteen.
         # MongoDB settings
         MONGODB_HOST = 'localhost'
         MONGODB_PORT = 27017
-        MONGODB_DB = 'stolovaya'
+        MONGODB_DB = 'canteen'
 
         # Flask settings
         SECRET_KEY = 'your-secure-random-string'
