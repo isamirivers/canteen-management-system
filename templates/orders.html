@@ -59,6 +59,44 @@
             });
         }
 
+        function markOrderStatus(orderId, cardElement, newStatus) {
+            fetch('/update_order_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    order_id: orderId,
+                    status: newStatus 
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateOrderButton(cardElement, newStatus);
+                }
+            });
+        }
+
+        function updateOrderButton(cardElement, status) {
+            const buttonContainer = cardElement.querySelector('.status-button');
+            let buttonHtml = '';
+            
+            switch(status) {
+                case 'ordered':
+                    buttonHtml = `<button onclick="markOrderStatus(${cardElement.dataset.orderId}, this.closest('.card'), 'ready')" class="" style="max-width: fit-content;">Отметить как готовый</button>`;
+                    break;
+                case 'ready':
+                    buttonHtml = `<button onclick="markOrderStatus(${cardElement.dataset.orderId}, this.closest('.card'), 'completed')" class="red" style="max-width: fit-content;">Выдать заказ</button>`;
+                    break;
+                case 'completed':
+                    cardElement.remove();
+                    return;
+            }
+            
+            buttonContainer.innerHTML = buttonHtml;
+        }
+
         function loadOrders(date) {
             // Сбрасываем таймер при ручном обновлении
             clearInterval(timer);
@@ -77,10 +115,13 @@
                 .then(data => {
                     const container = document.querySelector('.cards');
                     container.innerHTML = ''; // Очищаем контейнер
+                    const body = document.querySelector('body');
+                    body.className = '';
 
                     data.orders.forEach(order => {
                         const card = document.createElement('div');
                         card.className = 'card';
+                        card.dataset.orderId = order.order_id;
                         
                         let dishesHtml = order.dishes.map(dish => 
                             `<div style="display: flex; justify-content: space-between; width: 100%;">
@@ -98,8 +139,14 @@
                                 ${dishesHtml}
                             </div>
                             <div style="display: flex; justify-content: space-between; width: 100%;align-items:center;">
-                                <button onclick="markOrderComplete(${order.order_id}, this.closest('.card'))" style="max-width: fit-content;">Отметить как выполненный</button>
-                                <h3>Итого: ${order.total} {{texts.sign}}</h3>
+                                <div class="status-button">
+                                    ${order.status === 'ordered' ? 
+                                        `<button onclick="markOrderStatus(${order.order_id}, this.closest('.card'), 'ready')" class="" style="max-width: fit-content;">Отметить как готовый</button>` :
+                                        order.status === 'ready' ? 
+                                        `<button onclick="markOrderStatus(${order.order_id}, this.closest('.card'), 'completed')" class="red" style="max-width: fit-content;">Выдать заказ</button>` : 
+                                        ''}
+                                </div>
+                                <h3>Итого: ${order.total} {{ texts.sign }}</h3>
                             </div>
                         `;
                         container.appendChild(card);
@@ -108,6 +155,13 @@
                     if (data.orders.length === 0) {
                         container.innerHTML = '<div class="card"><h3>{{texts.no_orders}}</h3></div>';
                     }
+                })
+                .catch(error => {
+                    const container = document.querySelector('.cards');
+                    container.innerHTML = '<div class="card"><h3 class="error">Ошибка при получении заказов</h3></div>';
+                    const body = document.querySelector('body');
+                    body.className = 'error';
+                    console.error('Error fetching orders:', error);
                 });
         }
 

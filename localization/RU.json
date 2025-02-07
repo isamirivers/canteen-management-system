@@ -24,7 +24,7 @@
     "manage_users_button": "Управление пользователями",
     "completed_orders_button": "Выполненные заказы",
     "logo_alt": "Логотип",
-    "footer_text": "Canteen Management System by <a class='coral' href='https://github.com/isamirivers'>Risha</a> · Версия 0.8",
+    "footer_text": "Canteen Management System by <a class='coral' href='https://github.com/isamirivers'>Risha</a> · Версия 0.9",
     "logout_button": "Выйти",
     "weekdays": ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"],
     "of": "",

@@ -9,7 +9,7 @@ class Config:
     DEBUG = False
 
     # Locale
-    LOCALE = 'RU' # RU or EN
+    LOCALE = 'EN' # RU or EN
 
     # Server settings
     HOST = '127.0.0.1'

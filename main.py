@@ -58,10 +58,10 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
         user = users_collection.find_one({'_id': ObjectId(session['user_id'])})
         if not user or not user.get('admin', False):
-            return redirect(url_for('index'))
+            return redirect(url_for('home'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -206,7 +206,7 @@ def current_day_dishes():
     
     # Получаем номер дня недели для завтра (1-5)
     weekday = tomorrow.isoweekday()
-    if (weekday > 5):  # Если выходной, показываем следующий понедельник
+    if weekday > 5:  # Если выходной, показываем следующий понедельник
         days_until_monday = 8 - weekday  # 8 вместо 7, так как нам нужен следующий понедельник
         tomorrow = datetime.now() + timedelta(days=days_until_monday)
         weekday = 1
@@ -259,7 +259,7 @@ def create_order():
     existing_order = orders_collection.find_one({
         'user': user['login'],
         'date': tomorrow,
-        'completed': {'$ne': True}
+        'status': {'$ne': "completed"}
     })
 
     if existing_order:
@@ -276,7 +276,7 @@ def create_order():
         'dishes': [ObjectId(dish_id) for dish_id in dishes],
         'date': tomorrow,
         'user': user['login'],
-        'completed': False  # Добавляем поле completed
+        'status': 'ordered'  # Initialize with 'ordered' status
     }
     
     result = orders_collection.insert_one(order)
@@ -307,7 +307,7 @@ def get_orders():
     # Добавляем условие completed: {'$ne': True} для исключения выполненных заказов
     orders = list(orders_collection.find({
         'date': target_date,
-        'completed': {'$ne': True}
+        'status': {'$ne': 'completed'}  # Only show non-completed orders
     }))
     
     # Преобразуем данные для отправки
@@ -327,7 +327,8 @@ def get_orders():
             'order_id': order['order_id'],
             'user': order['user'],
             'dishes': dishes_info,
-            'total': sum(dish['price'] for dish in dishes_info)
+            'total': sum(dish['price'] for dish in dishes_info),
+            'status': order.get('status', 'ordered')  # Include status in response
         })
     
     return jsonify({'orders': formatted_orders})
@@ -366,7 +367,7 @@ def check_active_order():
     # Ищем активные заказы на сегодня и завтра
     active_orders = list(orders_collection.find({
         'user': user['login'],
-        'completed': {'$ne': True},
+        'status': {'$ne': 'completed'},
         'date': {'$in': [today, tomorrow]}
     }))
     
@@ -394,13 +395,33 @@ def check_active_order():
             'order_id': order['order_id'],
             'date': 'сегодня' if order['date'] == today else 'завтра',
             'dishes': dishes_info,
-            'total': total
+            'total': total,
+            'status': order.get('status', 'ordered')
         })
     
     return jsonify({
         'has_active_order': True,
         'orders': formatted_orders
     })
+
+@app.route('/update_order_status', methods=['POST'])
+@admin_required
+def update_order_status():
+    data = request.get_json()
+    order_id = data.get('order_id')
+    new_status = data.get('status')
+    
+    if new_status not in ['ordered', 'ready', 'completed']:
+        return jsonify({'success': False, 'error': 'Invalid status'}), 400
+    
+    result = orders_collection.update_one(
+        {'order_id': order_id},
+        {'$set': {'status': new_status}}
+    )
+    
+    if result.modified_count:
+        return jsonify({'success': True})
+    return jsonify({'success': False}), 404
 
 if __name__ == '__main__':
     initialize_days_collection()
