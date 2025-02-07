@@ -16,8 +16,6 @@
         <main>
             <a href="/editDishes" id="editDishesBtn" class="btn hidden"><button>{{ texts['edit_dishes_button'] }}</button></a>
             <a href="/edit" id="editBtn" class="btn hidden"><button>{{ texts['edit_order_button'] }}</button></a>
-            <a href="/users" id="usersBtn" class="btn hidden"><button>{{ texts['manage_users_button'] }}</button></a>
-            <a href="/ordersArchive" id="archiveBtn" class="btn hidden"><button>{{ texts['completed_orders_button'] }}</button></a>
             <div class="buttondown"></div>
             <div style="display: flex; flex-direction: column; align-items: center;gap: 10px;">
                 <img src="static/logo.svg" alt="{{ texts['logo_alt'] }}" height="80px">
@@ -35,8 +33,6 @@
                     window.location.href = '/';
                 } else {
                     if (data.admin) {
-                        document.getElementById('usersBtn').classList.remove('hidden');
-                        document.getElementById('archiveBtn').classList.remove('hidden');
                         document.getElementById('editBtn').classList.remove('hidden');
                         document.getElementById('editDishesBtn').classList.remove('hidden');
                     }

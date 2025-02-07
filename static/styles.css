@@ -12,6 +12,16 @@ body {
     background-size: 210vh;
     font-family: "Geologica", sans-serif;
     color: white;
+    transition: all 3s ease-in-out;
+}
+
+body.error {
+    background-size: 0;
+    background-color: black;
+}
+
+h3.error {
+    color: #FF7F7F;
 }
 
 body > div:first-child {

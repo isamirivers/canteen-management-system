@@ -6,10 +6,10 @@ class Config:
 
     # Flask settings
     SECRET_KEY = 'your-secret-key-here'  # Change this to a secure random string
-    DEBUG = True
+    DEBUG = False
 
     # Locale
-    LOCALE = 'RU' # RU or EN
+    LOCALE = 'EN' # RU or EN
 
     # Server settings
     HOST = '127.0.0.1'

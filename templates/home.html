@@ -29,6 +29,8 @@
     </div>
 
     <script>
+        let hasOrderForTomorrow = false;
+
         // Проверка авторизации и активного заказа
         fetch('/check_auth')
             .then(response => response.json())
@@ -50,6 +52,18 @@
                                         </div>`
                                     ).join('');
                                     
+                                    let statusText = '';
+                                    console.log(order)
+                                    if (order.status === 'ready' && order.date === 'завтра') {
+                                        statusText = 'Готов';
+                                    } else if (order.status === 'ready' && order.date === 'сегодня') {
+                                        statusText = `Назовите номер #${order.order_id}`;
+                                    } else if (order.date === 'завтра') {
+                                        statusText = 'Будет готов завтра';
+                                    } else if (order.date === 'сегодня') {
+                                        statusText = 'Будет готов сегодня';
+                                    }
+
                                     return `
                                     <div id="activeOrder" class="card">
                                         <div style="width: 100%;">
@@ -59,9 +73,9 @@
                                             <div style="width: 100%;">
                                                 ${dishesHtml}
                                             </div>
-                                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;    margin-top: 10px;">
-                                                <h3 style="color: #E7C3A1;">Назовите номер #${order.order_id}</h3>
-                                                <h3>Итого: ${order.total} {{texts.sign}}</h3>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 10px;">
+                                                <h3 style="color: #E7C3A1;">${statusText}</h3>
+                                                <h3>Итого: ${order.total} {{ texts.sign }}</h3>
                                             </div>
                                         </div>
                                     </div>
@@ -75,6 +89,7 @@
                                 
                                 // Проверяем, есть ли заказ на завтра
                                 if (data.orders.some(order => order.date === 'завтра')) {
+                                    hasOrderForTomorrow = true;
                                     document.querySelector('.bottom button').disabled = true;
                                     document.querySelector('.bottom button').style.opacity = '0.5';
                                     document.querySelector('.bottom button').textContent = 'У вас уже есть заказ на завтра';
@@ -92,6 +107,10 @@
         const dishPrices = new Map();
 
         function updateOrderButton() {
+            if (hasOrderForTomorrow) {
+                return;
+            }
+
             const total = Array.from(orderedDishes).reduce((sum, id) => sum + (dishPrices.get(id) || 0), 0);
             const button = document.querySelector('.bottom button');
             button.textContent = `${total} {{texts.sign}}`;
